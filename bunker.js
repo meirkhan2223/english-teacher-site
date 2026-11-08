@@ -1,10 +1,22 @@
 'use strict';
 /* ============ Bunker: The Last Code — presentation & game ============ */
+
+/* ---- MISSIONS: edit the task text and photo here ----
+   image: put a photo in the "images" folder, e.g. 'images/mission1.jpg' */
+const MISSIONS = [1, 2, 3, 4, 5].map(n => ({
+  title: `Mission ${n}`,
+  task: 'The task for this mission will be added here.',
+  image: ''
+}));
+
+const randCode = () => String(Math.floor(10000 + Math.random() * 90000));
 function getBunker() {
   let s = store.get('bunker', null);
-  if (!s || !/^\d{5}$/.test(s.code)) {
-    s = { code: String(Math.floor(10000 + Math.random() * 90000)),
-      teams: [{ name: 'TEAM ALPHA', got: [0, 0, 0, 0, 0] }, { name: 'TEAM BRAVO', got: [0, 0, 0, 0, 0] }] };
+  if (!s || !s.teams || !s.teams.every(t => /^\d{5}$/.test(t.code || ''))) {
+    const a = randCode(); let b = randCode(); while (b === a) b = randCode();
+    s = { winner: null, teams: [
+      { name: 'TEAM ALPHA', code: a, got: [0, 0, 0, 0, 0], opened: 0 },
+      { name: 'TEAM BRAVO', code: b, got: [0, 0, 0, 0, 0], opened: 0 }] };
     store.set('bunker', s);
   }
   return s;
@@ -43,16 +55,27 @@ function vault(id = '') {
 
 function viewBunker() {
   const st = getBunker();
+  const save = () => store.set('bunker', st);
   const card = (icon, label, value, d, wide = false) => `<div class="bk-card bk-a ${wide ? 'wide' : ''}" style="--d:${d}">
     <span class="bk-card-ic">${I(icon)}</span><div><small>${label}</small><p>${value}</p></div></div>`;
-  const slotHTML = (t, team) => team.got.map((g, m) => `<button class="bk-slot ${g ? 'on' : ''}" data-t="${t}" data-m="${m}">
-    <small>MISSION ${m + 1}</small><b>${g ? st.code[m] : '?'}</b></button>`).join('');
-  const teamHTML = (team, t) => `<div class="bk-team bk-a ${team.got.every(Boolean) ? 'ready' : ''}" data-t="${t}" style="--d:${t + 3}">
-    <div class="bk-team-head"><span class="bk-team-ic">${t ? 'B' : 'A'}</span><input class="bk-tname" data-t="${t}" value="${esc(team.name)}" aria-label="Team name"></div>
-    <div class="bk-slots">${slotHTML(t, team)}</div>
-    <div class="bk-bar"><span style="width:${team.got.filter(Boolean).length * 20}%"></span></div>
-    <div class="bk-ready">${I('check')} READY FOR THE FINAL TASK</div></div>`;
   const dust = Array.from({ length: 26 }, () => `<i style="left:${Math.random() * 100}%;animation-delay:${(-Math.random() * 14).toFixed(1)}s;animation-duration:${(9 + Math.random() * 10).toFixed(1)}s;--s:${(1 + Math.random() * 2.5).toFixed(1)}px"></i>`).join('');
+  const photo = (m, n) => m.image
+    ? `<img src="${esc(m.image)}" alt="${esc(m.title)}">`
+    : `<div class="bk-ph-empty">${I('board')}<b>PHOTO ${n}</b><small>add images/mission${n}.jpg</small></div>`;
+
+  const missionSlides = MISSIONS.map((m, i) => `<div class="bk-split bk-mission">
+      <div class="bk-a bk-photo"><span class="bk-photo-tag">M${i + 1}</span>${photo(m, i + 1)}</div>
+      <div>
+        <span class="bk-kicker bk-a">// MISSION ${i + 1} OF ${MISSIONS.length}</span>
+        <h2 class="bk-h bk-a" style="--d:1">${esc(m.title)}</h2>
+        <p class="bk-task bk-a" style="--d:2">${esc(m.task)}</p>
+        <div class="bk-marks bk-a" style="--d:3">
+          <small>MISSION COMPLETE? — CLICK THE TEAM</small>
+          ${[0, 1].map(t => `<button class="bk-mark" data-t="${t}" data-m="${i}"><span class="bkm-badge">${t ? 'B' : 'A'}</span>
+            <span class="bkm-name"></span><span class="bkm-state"></span></button>`).join('')}
+        </div>
+      </div>
+    </div>`);
 
   const slides = [
     `<div class="bk-pad">
@@ -93,26 +116,36 @@ function viewBunker() {
       <div class="bkd-caption bk-a" style="--d:5" id="bkdCap">Two teams start the missions…</div>
       <div class="bk-tags bk-a" style="--d:5"><span>WORK TOGETHER</span><span>THINK FAST</span><span>USE PAST SIMPLE</span></div>
     </div>`,
+    ...missionSlides,
     `<div class="bk-pad">
       <span class="bk-kicker bk-a">// CODE TRACKER</span>
-      <h2 class="bk-h bk-a" style="--d:1">Collect the five code digits</h2>
-      <p class="bk-note bk-a" style="--d:2">Click a mission when a team completes it — its code digit unlocks.</p>
-      <div class="bk-teams">${st.teams.map(teamHTML).join('')}</div>
-      <div class="bk-admin bk-a" style="--d:6">
-        <span>${I('lock')} Secret code (teacher only):</span>
-        <input id="bkCode" type="password" maxlength="5" inputmode="numeric" value="${st.code}" aria-label="Secret code">
-        <button class="bk-btn sm" id="bkShow">Show</button><button class="bk-btn sm" id="bkSave">Save</button><button class="bk-btn sm danger" id="bkReset">Reset game</button>
-      </div>
+      <h2 class="bk-h bk-a" style="--d:1">Your code digits</h2>
+      <p class="bk-note bk-a" style="--d:2">Each team has its own secret code. A digit unlocks for every completed mission.</p>
+      <div class="bk-teams">${[0, 1].map(t => `<div class="bk-team bk-a" data-t="${t}" style="--d:${t + 3}">
+        <div class="bk-team-head"><span class="bk-team-ic">${t ? 'B' : 'A'}</span><b class="bk-tname"></b><span class="bk-tcount"></span></div>
+        <div class="bk-slots"></div>
+        <div class="bk-bar"><span></span></div>
+        <div class="bk-ready">${I('check')} READY FOR THE FINAL TASK</div></div>`).join('')}</div>
     </div>`,
     `<div class="bk-split">
       <div class="bk-a bk-vault-col">${vault('bkFinalVault')}</div>
       <div class="bk-keypad-col">
         <span class="bk-kicker bk-a">// FINAL TASK</span>
         <h2 class="bk-h bk-a" style="--d:1">Enter the secret code</h2>
-        <div class="bk-display bk-a" id="bkDisplay" style="--d:2">${'<span class="bk-digit"></span>'.repeat(5)}</div>
-        <div class="bk-status bk-a" id="bkStatus" style="--d:3">AWAITING INPUT…</div>
+        <div class="bk-who bk-a" style="--d:2">${[0, 1].map(t => `<button data-who="${t}"><span class="bkm-badge">${t ? 'B' : 'A'}</span><span class="bkm-name"></span></button>`).join('')}</div>
+        <div class="bk-display bk-a" id="bkDisplay" style="--d:3">${'<span class="bk-digit"></span>'.repeat(5)}</div>
+        <div class="bk-status bk-a" id="bkStatus" style="--d:3">CHOOSE YOUR TEAM, THEN ENTER THE CODE</div>
         <div class="bk-keys bk-a" style="--d:4">${['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'OK'].map(k => `<button class="bk-key ${k === 'OK' ? 'ok' : k === 'C' ? 'clr' : ''}" data-k="${k}">${k}</button>`).join('')}</div>
       </div>
+    </div>`,
+    `<div class="bk-pad bk-center" id="bkResults">
+      <span class="bk-kicker bk-a">// MISSION REPORT</span>
+      <h2 class="bk-h bk-a" style="--d:1" id="bkResTitle"></h2>
+      <div class="bk-trophy bk-a" style="--d:2">${I('trophy')}</div>
+      <div class="bk-res bk-a" style="--d:3">${[0, 1].map(t => `<div class="bk-res-card" data-t="${t}">
+        <span class="bk-crown">WINNER</span>
+        <div class="bk-team-head"><span class="bk-team-ic">${t ? 'B' : 'A'}</span><b class="bk-tname"></b></div>
+        <div class="bk-pips"></div><p class="bk-res-line"></p><p class="bk-res-door"></p></div>`).join('')}</div>
     </div>`
   ];
 
@@ -133,13 +166,29 @@ function viewBunker() {
         <span class="bk-count" id="bkCount"></span>
         <button class="bk-btn" id="bkNext" aria-label="Next">${I('right')}</button>
         <button class="bk-btn" id="bkFs" aria-label="Full screen">${I('expand')}</button>
+        <button class="bk-btn bk-gear" id="bkGear" aria-label="Teacher settings" title="Teacher settings">${I('lock')}</button>
+      </div>
+      <div class="bk-panel" id="bkPanel">
+        <div class="bk-panel-box">
+          <h3>${I('lock')} Teacher settings</h3>
+          <p>Secret codes are hidden. Open this panel only when students cannot see the screen.</p>
+          ${[0, 1].map(t => `<div class="bk-panel-row"><span class="bk-team-ic">${t ? 'B' : 'A'}</span>
+            <input class="bkp-name" data-t="${t}" maxlength="18" aria-label="Team name">
+            <input class="bkp-code" data-t="${t}" type="password" maxlength="5" inputmode="numeric" aria-label="Secret code"></div>`).join('')}
+          <div class="bk-panel-actions">
+            <button class="bk-btn sm" id="bkpShow">Show codes</button>
+            <button class="bk-btn sm" id="bkpNew">New random codes</button>
+            <button class="bk-btn sm danger" id="bkpReset">Reset game</button>
+          </div>
+          <div class="bk-panel-actions"><button class="bk-btn sm" id="bkpClose">Cancel</button><button class="bk-btn sm ok" id="bkpSave">Save</button></div>
+        </div>
       </div>
       <div class="bk-hazard bottom"></div>
       <div class="bk-scan"></div><div class="bk-flash"></div>
     </div>`,
     mount(v) {
       const bk = $('#bk', v), els = $$('.bk-slide', bk);
-      let cur = -1, token = 0, entry = '', opened = false;
+      let cur = -1, token = 0, entry = '', opened = false, who = null, resetArmed = false;
       const timers = [];
 
       /* ---- animated rules demo (mission slide) ---- */
@@ -194,6 +243,34 @@ function viewBunker() {
           stop() { cancelAnimationFrame(raf); raf = 0; }
         };
       })();
+      /* ---- keep every slide in sync with the saved game ---- */
+      const firstOf = m => { const [a, b] = st.teams.map(t => t.got[m]); return a && (!b || a <= b) ? 0 : b ? 1 : -1; };
+      const sync = () => {
+        $$('.bkm-name', bk).forEach(el => { const h = el.closest('[data-t],[data-who]'); el.textContent = st.teams[+(h.dataset.t ?? h.dataset.who)].name; });
+        $$('.bk-tname', bk).forEach(el => el.textContent = st.teams[+el.closest('[data-t]').dataset.t].name);
+        $$('.bk-mark', bk).forEach(b => {
+          const t = +b.dataset.t, m = +b.dataset.m, done = !!st.teams[t].got[m];
+          b.classList.toggle('on', done);
+          $('.bkm-state', b).innerHTML = done ? `${I('check')} DONE${firstOf(m) === t ? ' · 1ST' : ''}` : 'MARK AS DONE';
+        });
+        st.teams.forEach((team, t) => {
+          const box = $(`.bk-team[data-t="${t}"]`, bk), n = team.got.filter(Boolean).length;
+          $('.bk-slots', box).innerHTML = team.got.map((g, m) => `<div class="bk-slot ${g ? 'on' : ''}"><small>MISSION ${m + 1}</small><b>${g ? team.code[m] : '?'}</b></div>`).join('');
+          $('.bk-bar span', box).style.width = n * 20 + '%';
+          $('.bk-tcount', box).textContent = `${n}/5`;
+          box.classList.toggle('ready', n === 5);
+          const rc = $(`.bk-res-card[data-t="${t}"]`, bk);
+          $('.bk-pips', rc).innerHTML = team.got.map(g => `<i class="${g ? 'on' : ''}"></i>`).join('');
+          $('.bk-res-line', rc).textContent = `${n} of 5 missions completed`;
+          $('.bk-res-door', rc).innerHTML = team.opened ? `${I('unlock')} Opened the door at ${new Date(team.opened).toLocaleTimeString('en-GB')}` : `${I('lock')} Door still locked`;
+          rc.classList.toggle('win', st.winner === t);
+        });
+        const lead = st.teams.map(t => t.got.filter(Boolean).length);
+        $('#bkResTitle', bk).textContent = st.winner != null ? `${st.teams[st.winner].name} opened the bunker!`
+          : lead[0] === lead[1] ? 'The game is still on…' : `${st.teams[lead[0] > lead[1] ? 0 : 1].name} is in the lead`;
+        $('#bkResults', bk).classList.toggle('has-winner', st.winner != null);
+        $$('.bk-who button', bk).forEach(b => b.classList.toggle('on', +b.dataset.who === who));
+      };
 
       $$('.bk-type', bk).forEach(el => el.dataset.full = el.textContent);
       const typeIn = s => {
@@ -214,60 +291,88 @@ function viewBunker() {
           timers.push(setTimeout(() => old.classList.remove('leaving', 'to-left', 'to-right'), 900));
           pulse('flash'); beep(n > cur ? 520 : 440, .07, 'square', .04);
         }
-        cur = n; els[n].classList.add('active');
+        cur = n; els[n].classList.add('active'); sync();
         $$('.bk-dots button', bk).forEach((b, i) => b.classList.toggle('on', i === n));
         $('#bkCount', bk).textContent = `${String(n + 1).padStart(2, '0')} / ${String(els.length).padStart(2, '0')}`;
         $('#bkPrev', bk).disabled = n === 0; $('#bkNext', bk).disabled = n === els.length - 1;
         typeIn(els[n]);
         if ($('#bkDemo', els[n])) demo.start(); else demo.stop();
+        if ($('#bkResults', els[n]) && st.winner != null) timers.push(setTimeout(() => { confetti(200); winSound(); }, 900));
       };
       $('#bkPrev', bk).onclick = () => go(cur - 1);
       $('#bkNext', bk).onclick = () => go(cur + 1);
       $('.bk-dots', bk).onclick = e => { const b = e.target.closest('[data-go]'); if (b) go(+b.dataset.go); };
       const fs = () => { if (document.fullscreenElement) document.exitFullscreen(); else (bk.requestFullscreen || bk.webkitRequestFullscreen || (() => {})).call(bk); };
       $('#bkFs', bk).onclick = fs; $('#bkFull', v).onclick = fs;
-
       const clock = () => { const c = $('#bkClock', bk); if (c) c.textContent = new Date().toLocaleTimeString('en-GB'); };
       clock(); const clockIv = setInterval(clock, 1000);
 
-      /* ---- tracker ---- */
-      const save = () => store.set('bunker', st);
-      const redrawTeam = t => {
-        const box = $(`.bk-team[data-t="${t}"]`, bk), team = st.teams[t];
-        $('.bk-slots', box).innerHTML = slotHTML(t, team);
-        $('.bk-bar span', box).style.width = team.got.filter(Boolean).length * 20 + '%';
-        box.classList.toggle('ready', team.got.every(Boolean));
-      };
-      $('.bk-teams', bk).onclick = e => {
-        const b = e.target.closest('.bk-slot'); if (!b) return;
+      /* ---- mark missions ---- */
+      $('.bk-slides', bk).addEventListener('click', e => {
+        const b = e.target.closest('.bk-mark'); if (!b) return;
         const t = +b.dataset.t, m = +b.dataset.m, team = st.teams[t];
-        team.got[m] = team.got[m] ? 0 : 1; save(); redrawTeam(t);
+        team.got[m] = team.got[m] ? 0 : Date.now(); save(); sync();
         if (team.got[m]) {
+          b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
           beep(660, .08, 'square', .05); beep(990, .12, 'square', .05, .08);
-          const nb = $(`.bk-team[data-t="${t}"] .bk-slot[data-m="${m}"]`, bk); nb.classList.add('pop');
-          if (team.got.every(Boolean)) { winSound(); toast(`${team.name} has all 5 digits! 🔓`, 'ok'); }
+          if (team.got.every(Boolean)) { winSound(); toast(`${team.name} completed all 5 missions! 🔓`, 'ok'); }
         }
+      });
+
+      /* ---- teacher panel ---- */
+      const panel = $('#bkPanel', bk);
+      const openPanel = () => {
+        $$('.bkp-name', panel).forEach(i => i.value = st.teams[+i.dataset.t].name);
+        $$('.bkp-code', panel).forEach(i => { i.value = st.teams[+i.dataset.t].code; i.type = 'password'; });
+        $('#bkpShow', panel).textContent = 'Show codes'; resetArmed = false; $('#bkpReset', panel).textContent = 'Reset game';
+        panel.classList.add('open');
       };
-      $('.bk-teams', bk).oninput = e => { const i = e.target.closest('.bk-tname'); if (!i) return; st.teams[+i.dataset.t].name = i.value.trim() || 'TEAM'; save(); };
-      $('#bkShow', bk).onclick = e => { const i = $('#bkCode', bk); i.type = i.type === 'password' ? 'text' : 'password'; e.currentTarget.textContent = i.type === 'password' ? 'Show' : 'Hide'; };
-      $('#bkSave', bk).onclick = () => {
-        const val = $('#bkCode', bk).value.trim();
-        if (!/^\d{5}$/.test(val)) return toast('The code must be exactly 5 digits', 'err');
-        st.code = val; save(); redrawTeam(0); redrawTeam(1); toast('Secret code saved 🔒', 'ok');
+      $('#bkGear', bk).onclick = () => panel.classList.contains('open') ? panel.classList.remove('open') : openPanel();
+      $('#bkpClose', panel).onclick = () => panel.classList.remove('open');
+      $('#bkpShow', panel).onclick = e => {
+        const show = $('.bkp-code', panel).type === 'password';
+        $$('.bkp-code', panel).forEach(i => i.type = show ? 'text' : 'password'); e.currentTarget.textContent = show ? 'Hide codes' : 'Show codes';
       };
-      const closeVault = () => { opened = false; $('#bkFinalVault', bk).classList.remove('open'); entry = ''; paintEntry(); setStatus('AWAITING INPUT…', ''); };
-      $('#bkReset', bk).onclick = () => { st.teams.forEach(t => t.got = [0, 0, 0, 0, 0]); save(); redrawTeam(0); redrawTeam(1); closeVault(); toast('Game reset — good luck, teams!'); };
+      $('#bkpNew', panel).onclick = () => {
+        const a = randCode(); let b = randCode(); while (b === a) b = randCode();
+        $$('.bkp-code', panel).forEach(i => i.value = i.dataset.t === '0' ? a : b); toast('New codes generated — press Save');
+      };
+      $('#bkpSave', panel).onclick = () => {
+        const codes = $$('.bkp-code', panel).map(i => i.value.trim());
+        if (!codes.every(c => /^\d{5}$/.test(c))) return toast('Each code must be exactly 5 digits', 'err');
+        if (codes[0] === codes[1]) return toast('Give the two teams different codes', 'err');
+        $$('.bkp-name', panel).forEach(i => st.teams[+i.dataset.t].name = i.value.trim().toUpperCase() || (i.dataset.t === '0' ? 'TEAM ALPHA' : 'TEAM BRAVO'));
+        codes.forEach((c, t) => st.teams[t].code = c);
+        save(); sync(); panel.classList.remove('open'); toast('Settings saved 🔒', 'ok');
+      };
+      const closeVault = () => { opened = false; $('#bkFinalVault', bk).classList.remove('open'); entry = ''; paintEntry(); setStatus(who == null ? 'CHOOSE YOUR TEAM, THEN ENTER THE CODE' : 'AWAITING INPUT…', ''); };
+      $('#bkpReset', panel).onclick = e => {
+        if (!resetArmed) { resetArmed = true; e.currentTarget.textContent = 'Click again to confirm'; return; }
+        st.teams.forEach(t => { t.got = [0, 0, 0, 0, 0]; t.opened = 0; }); st.winner = null; save();
+        who = null; closeVault(); sync(); panel.classList.remove('open'); toast('Game reset — good luck, teams!');
+      };
 
       /* ---- final keypad ---- */
       const setStatus = (txt, cls) => { const s = $('#bkStatus', bk); s.textContent = txt; s.className = 'bk-status bk-a ' + cls; };
       const paintEntry = () => $$('.bk-digit', bk).forEach((d, i) => { d.textContent = entry[i] || ''; d.classList.toggle('filled', !!entry[i]); });
+      $('.bk-who', bk).onclick = e => {
+        const b = e.target.closest('[data-who]'); if (!b) return;
+        who = +b.dataset.who; if (opened) closeVault(); entry = ''; paintEntry(); sync();
+        setStatus(`${st.teams[who].name}: ENTER YOUR CODE`, ''); beep(600, .06, 'square', .04);
+      };
       const press = k => {
         if (opened && k !== 'C') return;
-        if (k === 'C') { if (opened) return closeVault(); entry = ''; paintEntry(); setStatus('AWAITING INPUT…', ''); beep(300, .06, 'square', .04); return; }
+        if (k === 'C') { if (opened) return closeVault(); entry = ''; paintEntry(); beep(300, .06, 'square', .04); return; }
+        if (who == null) { setStatus('FIRST CHOOSE YOUR TEAM ABOVE', 'warn'); beep(260, .12, 'square', .05); return; }
         if (k === 'OK') {
           if (entry.length < 5) { setStatus('ENTER ALL 5 DIGITS', 'warn'); beep(260, .12, 'square', .05); return; }
-          if (entry === st.code) {
-            opened = true; setStatus('ACCESS GRANTED — THE DOOR IS OPEN!', 'ok'); pulse('granted');
+          const team = st.teams[who];
+          if (entry === team.code) {
+            opened = true;
+            if (!team.opened) team.opened = Date.now();
+            const first = st.winner == null; if (first) st.winner = who;
+            save(); sync();
+            setStatus(first ? `ACCESS GRANTED — ${team.name} WINS!` : `ACCESS GRANTED — ${team.name} IS IN TOO!`, 'ok'); pulse('granted');
             $('#bkFinalVault', bk).classList.add('open');
             [0, .15, .3, .45].forEach((d, i) => beep(520 + i * 180, .18, 'square', .06, d));
             timers.push(setTimeout(() => { confetti(220); winSound(); }, 1800));
@@ -285,11 +390,11 @@ function viewBunker() {
       $('.bk-keys', bk).onclick = e => { const b = e.target.closest('[data-k]'); if (b) press(b.dataset.k); };
 
       const key = e => {
-        if (e.target.matches('input,textarea')) return;
+        if (e.target.matches('input,textarea') || panel.classList.contains('open')) return;
         if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
         else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
         else if (e.key === 'f' || e.key === 'F') fs();
-        else if (cur === els.length - 1) {
+        else if ($('.bk-keys', els[cur])) {
           if (/^\d$/.test(e.key)) press(e.key);
           else if (e.key === 'Enter') press('OK');
           else if (e.key === 'Backspace') { entry = entry.slice(0, -1); paintEntry(); }
