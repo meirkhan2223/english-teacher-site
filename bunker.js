@@ -77,16 +77,20 @@ function viewBunker() {
       </div>
     </div>`,
     `<div class="bk-pad bk-center">
-      <div class="bk-lock bk-a">${I('lock')}</div>
       <span class="bk-kicker bk-a" style="--d:1">// THE MISSION</span>
       <h2 class="bk-h bk-a" style="--d:2">The bunker door is locked.</h2>
       <p class="bk-type bk-a" style="--d:3">You need a secret code to open it. Work together, think fast and use Past Simple. The first team to complete the final task wins!</p>
-      <div class="bk-flow bk-a" style="--d:4">
-        <div class="bk-step"><span>${I('gamepad')}</span><b>5 Missions</b></div><i class="bk-pipe"></i>
-        <div class="bk-step"><span class="num">#</span><b>5 Code digits</b></div><i class="bk-pipe"></i>
-        <div class="bk-step"><span>${I('edit')}</span><b>Final task</b></div><i class="bk-pipe"></i>
-        <div class="bk-step win"><span>${I('unlock')}</span><b>Door opens</b></div>
+      <div class="bk-demo bk-a" style="--d:4" id="bkDemo">
+        <div class="bkd-rows">${['A', 'B'].map(t => `<div class="bkd-row t${t}">
+          <span class="bkd-badge">${t}</span>
+          <div class="bkd-track"><i class="bkd-line"><b class="bkd-fill"></b></i>
+            ${[1, 2, 3, 4, 5].map(m => `<span class="bkd-cp" style="left:${m * 16}%"><small>M${m}</small></span>`).join('')}
+            <span class="bkd-pop">+1 DIGIT</span>
+            <span class="bkd-runner">${I('users')}</span></div>
+          <div class="bkd-code">${'<span></span>'.repeat(5)}</div></div>`).join('')}</div>
+        <div class="bkd-door"><span class="lk">${I('lock')}</span><span class="ul">${I('unlock')}</span><small>DOOR</small></div>
       </div>
+      <div class="bkd-caption bk-a" style="--d:5" id="bkdCap">Two teams start the missions…</div>
       <div class="bk-tags bk-a" style="--d:5"><span>WORK TOGETHER</span><span>THINK FAST</span><span>USE PAST SIMPLE</span></div>
     </div>`,
     `<div class="bk-pad">
@@ -138,6 +142,59 @@ function viewBunker() {
       let cur = -1, token = 0, entry = '', opened = false;
       const timers = [];
 
+      /* ---- animated rules demo (mission slide) ---- */
+      const demo = (() => {
+        const box = $('#bkDemo', bk), cap = $('#bkdCap', bk), door = $('.bkd-door', box);
+        const DIG = '73914', STOPS = [0, 16, 32, 48, 64, 80, 100], START = 1.8, PERIOD = 13.5, MOVE = .72;
+        const teams = $$('.bkd-row', box).map((row, i) => ({
+          row, leg: i ? 1.75 : 1.4, name: i ? 'Team B' : 'Team A',
+          runner: $('.bkd-runner', row), fill: $('.bkd-fill', row), pop: $('.bkd-pop', row),
+          cps: $$('.bkd-cp', row), digits: $$('.bkd-code span', row), shown: -1
+        }));
+        const ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+        let raf = 0, t0 = 0, lastCap = '';
+        const setCap = s => { if (s === lastCap) return; lastCap = s; cap.textContent = s; cap.classList.remove('swap'); void cap.offsetWidth; cap.classList.add('swap'); };
+        const frame = now => {
+          const t = ((now - t0) / 1000) % PERIOD;
+          let winner = null;
+          const res = teams.map(T => {
+            const e = Math.max(0, t - START), leg = Math.floor(e / T.leg);
+            let pos = 100, reached = 6, pausing = false;
+            if (leg < 6) {
+              const k = Math.min(1, (e - leg * T.leg) / (T.leg * MOVE));
+              pos = STOPS[leg] + (STOPS[leg + 1] - STOPS[leg]) * ease(k);
+              reached = leg + (k >= 1 ? 1 : 0); pausing = k >= 1;
+            }
+            const done = Math.min(5, reached);
+            T.runner.style.left = pos + '%'; T.fill.style.width = pos + '%';
+            T.runner.classList.toggle('moving', t > START && !pausing && reached < 6);
+            if (done !== T.shown) {
+              T.cps.forEach((c, i) => c.classList.toggle('on', i < done));
+              T.digits.forEach((d, i) => { d.textContent = i < done ? DIG[i] : ''; d.classList.toggle('on', i < done); });
+              T.shown = done;
+            }
+            const showPop = pausing && reached >= 1 && reached <= 5;
+            if (showPop) T.pop.style.left = STOPS[reached] + '%';
+            T.pop.classList.toggle('show', showPop);
+            if (reached >= 6 && !winner) winner = T;
+            return reached;
+          });
+          teams.forEach(T => T.row.classList.toggle('win', T === winner));
+          door.classList.toggle('open', !!winner);
+          const a = res[0];
+          setCap(t < START ? 'Two teams start the missions…'
+            : winner ? `${winner.name} solves the final task and opens the bunker first — they win! 🏆`
+            : a === 0 ? 'Complete each mission using the Past Simple'
+            : a <= 4 ? `Mission ${a} complete → +1 code digit!`
+            : 'All 5 digits collected → now solve the final task!');
+          raf = requestAnimationFrame(frame);
+        };
+        return {
+          start() { if (raf) return; t0 = performance.now(); teams.forEach(T => T.shown = -1); lastCap = ''; raf = requestAnimationFrame(frame); },
+          stop() { cancelAnimationFrame(raf); raf = 0; }
+        };
+      })();
+
       $$('.bk-type', bk).forEach(el => el.dataset.full = el.textContent);
       const typeIn = s => {
         const my = ++token;
@@ -162,6 +219,7 @@ function viewBunker() {
         $('#bkCount', bk).textContent = `${String(n + 1).padStart(2, '0')} / ${String(els.length).padStart(2, '0')}`;
         $('#bkPrev', bk).disabled = n === 0; $('#bkNext', bk).disabled = n === els.length - 1;
         typeIn(els[n]);
+        if ($('#bkDemo', els[n])) demo.start(); else demo.stop();
       };
       $('#bkPrev', bk).onclick = () => go(cur - 1);
       $('#bkNext', bk).onclick = () => go(cur + 1);
@@ -240,7 +298,7 @@ function viewBunker() {
       document.addEventListener('keydown', key);
       go(0);
       return () => {
-        document.removeEventListener('keydown', key); clearInterval(clockIv); timers.forEach(clearTimeout); token++;
+        document.removeEventListener('keydown', key); clearInterval(clockIv); timers.forEach(clearTimeout); token++; demo.stop();
         if (document.fullscreenElement) document.exitFullscreen();
       };
     }
