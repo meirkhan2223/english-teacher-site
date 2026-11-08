@@ -353,3 +353,148 @@
   .bk-mission .bk-marks{text-align:left}
   .bk-res{grid-template-columns:1fr}
 }
+
+/* ===== mission graphics ===== */
+.bk-vis{position:relative;aspect-ratio:4/3;border-radius:18px;overflow:hidden;border:2px solid rgba(57,255,136,.35);
+  background:radial-gradient(ellipse at 50% 30%,#0e2a1a,#04100a 75%);box-shadow:0 0 50px -10px rgba(57,255,136,.35)}
+.bk-vis::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:inherit;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 2px,transparent 2px 4px)}
+.bkv-teach{position:absolute;right:12px;top:12px;z-index:6;opacity:.45}
+.bkv-teach:hover{opacity:1}
+.bkv-teach.static{position:static;margin-left:auto}
+
+/* M1 mirror */
+.bkv-mirror{position:absolute;inset:58px 26px 40px;perspective:1100px}
+.bkv-flip{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1.1s var(--spring)}
+.revealed .bkv-flip{transform:rotateY(180deg)}
+.bkv-face{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:22px 26px;border-radius:14px;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;
+  background:linear-gradient(160deg,#f3f0e6,#d9d3c0);color:#1b1a16;box-shadow:0 20px 40px -10px rgba(0,0,0,.7)}
+.bkv-face small{font-size:11px;letter-spacing:.18em;color:#7a6a3a}
+.bkv-face p{font-family:"Black Ops One",system-ui;font-size:clamp(13px,1.3vw,24px);line-height:1.4;letter-spacing:.04em;padding-right:14%}
+.bkv-face .flipped{padding:0 0 0 14%}
+.bkv-face .flipped{transform:scaleX(-1)}
+.bkv-face.back{transform:rotateY(180deg);background:linear-gradient(160deg,#0d2a19,#06150d);color:var(--g);border:1px solid var(--g);box-shadow:0 0 40px -6px var(--g)}
+.bkv-face.back small{color:var(--amber)}
+.bkv-shine{position:absolute;inset:-20% auto -20% -40%;width:30%;transform:skewX(-20deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent)}
+.bk-slide.active .bkv-shine{animation:bkvShine 3.8s ease-in-out 1.2s infinite}
+@keyframes bkvShine{0%{left:-40%}55%,100%{left:130%}}
+.bkv-glass{position:absolute;right:-26px;bottom:-64px;width:20%;aspect-ratio:3/4;border-radius:12px;rotate:-14deg;z-index:3;
+  border:6px solid #c9d0d7;box-shadow:0 0 0 2px #5a636d,0 18px 30px rgba(0,0,0,.6);overflow:hidden;
+  background:linear-gradient(135deg,#dbe9f3,#8fa6b6 60%,#cfe0ea)}
+.bkv-glass i{position:absolute;inset:-30%;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.9) 50%,transparent 60%)}
+.bk-slide.active .bkv-glass{animation:bkvGlass 5s ease-in-out infinite alternate}
+.bk-slide.active .bkv-glass i{animation:bkvGlint 3s ease-in-out infinite}
+@keyframes bkvGlass{to{rotate:-6deg;translate:-8px -10px}}
+@keyframes bkvGlint{0%{translate:-60% 0}60%,100%{translate:60% 0}}
+.revealed .bkv-glass{opacity:0;translate:40px 40px;transition:all .6s}
+
+/* M2 cups */
+.bkv-cups{position:absolute;inset:0;width:100%;height:100%}
+.bkv-cups text{font:800 18px "Plus Jakarta Sans",system-ui;fill:#1b0a12}
+.bkv-cup{opacity:0}
+.bk-slide.active .bkv-cup{animation:bkvCupIn .8s var(--spring) both,bkvCupBob 3.4s ease-in-out infinite alternate;
+  animation-delay:calc(.5s + var(--d) * .09s),calc(1.6s + var(--d) * .3s)}
+@keyframes bkvCupIn{from{opacity:0;translate:0 -70px}to{opacity:1;translate:0 0}}
+@keyframes bkvCupBob{from{opacity:1;translate:0 0}to{opacity:1;translate:0 -5px}}
+.bkv-kz{position:absolute;z-index:3;padding:5px 10px;border-radius:6px;font:700 12px "Plus Jakarta Sans",system-ui;color:#1a1000;
+  background:#ffe14d;box-shadow:0 6px 14px rgba(0,0,0,.5);opacity:0;left:3%;top:4%;translate:-50% -50%}
+.bk-slide.active .bkv-kz{animation:bkvKz 7.5s var(--ease) infinite}
+.bk-slide.active .bkv-kz.k2{animation-delay:2.5s}
+.bk-slide.active .bkv-kz.k3{animation-delay:5s}
+.bkv-kz.k1{--x:50%;--y:50%}.bkv-kz.k2{--x:35%;--y:83%}.bkv-kz.k3{--x:68%;--y:44%}
+@keyframes bkvKz{0%{opacity:0;left:8%;top:8%;rotate:-10deg;scale:.8}12%{opacity:1}45%,82%{opacity:1;left:var(--x);top:var(--y);rotate:0deg;scale:1}100%{opacity:0;left:var(--x);top:var(--y)}}
+.bkv-legend{position:absolute;left:12px;right:12px;bottom:10px;z-index:3;text-align:center;font-size:12px;color:rgba(214,255,226,.7)}
+.bkv-legend span{padding:2px 7px;border-radius:5px;background:#e8236f;color:#fff;font-weight:800}
+.bkv-legend span.kz{background:#ffe14d;color:#1a1000}
+.bkv-legend b{color:var(--amber)}
+
+/* M3 spiral */
+.bk-vis.vis-spiral{aspect-ratio:1/1;max-height:min(66vh,560px);margin:0 auto;width:100%;background:radial-gradient(circle,#123d2b,#05140c 72%)}
+svg.bkv-spiral{position:absolute;inset:3%;width:94%;height:94%}
+.bkv-spiral text{font-family:"JetBrains Mono",monospace;font-weight:700;fill:#d6ffe2}
+.bkv-spiral .gap{fill:var(--amber);transition:fill .4s}
+.revealed .bkv-spiral .gap{fill:var(--g)}
+.bkv-sp-rot{transform-box:fill-box;transform-origin:50% 50%}
+.bk-slide.active .bkv-sp-rot{animation:bkvSpin 1.8s var(--ease) .4s both}
+@keyframes bkvSpin{from{opacity:0;transform:rotate(-140deg) scale(.4)}to{opacity:1;transform:none}}
+.bkv-ring{fill:none;stroke:#ffb020;stroke-width:3;transform-origin:50% 50%;transform-box:fill-box}
+.bk-slide.active .bkv-ring{animation:bkvRing 2.4s ease-out infinite}
+.bk-slide.active .bkv-ring.r2{animation-delay:1.2s}
+@keyframes bkvRing{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.9)}}
+
+/* M4 quiz */
+.bk-vis.vis-quiz{aspect-ratio:auto;min-height:420px;display:flex}
+.bkq{flex:1;display:flex;flex-direction:column;gap:14px;padding:54px 22px 18px}
+.bkq-pips{display:flex;gap:6px;flex-wrap:wrap}
+.bkq-pips button{flex:1;min-width:28px;height:30px;border-radius:8px;cursor:pointer;font:700 13px "JetBrains Mono",monospace;color:rgba(214,255,226,.6);
+  background:rgba(57,255,136,.06);border:1px solid rgba(57,255,136,.2);transition:all .3s var(--spring)}
+.bkq-pips button.seen{color:var(--g);border-color:rgba(57,255,136,.45)}
+.bkq-pips button.on{color:#05110a;background:var(--amber);border-color:var(--amber);transform:translateY(-3px);box-shadow:0 0 16px rgba(255,176,32,.6)}
+.bkq-stage{flex:1;position:relative}
+.bkq-card{display:flex;flex-direction:column;gap:10px}
+.bkq-card.in-r{animation:bkqR .55s var(--ease)}
+.bkq-card.in-l{animation:bkqL .55s var(--ease)}
+@keyframes bkqR{from{opacity:0;translate:60px 0;filter:blur(6px)}}
+@keyframes bkqL{from{opacity:0;translate:-60px 0;filter:blur(6px)}}
+.bkq-num{font-size:12px;letter-spacing:.22em;color:var(--amber)}
+.bkq-q{font:800 clamp(19px,2vw,27px)/1.35 "Plus Jakarta Sans",system-ui;color:#effff3}
+.bkq-blank{display:inline-block;min-width:90px;padding:0 8px;margin:0 4px;border-bottom:3px solid var(--amber);color:var(--g);text-align:center}
+.bkq-kz{font-size:13px;color:rgba(214,255,226,.55);font-style:italic}
+.bkq-opts{display:grid;gap:9px;margin-top:4px}
+.bkq-opt{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:rgba(4,16,10,.85);border:1.5px solid rgba(57,255,136,.22);
+  font:700 16px "Plus Jakarta Sans",system-ui;color:#e6fff0;transition:all .45s var(--spring)}
+.bkq-card.in-r .bkq-opt,.bkq-card.in-l .bkq-opt{animation:bkIn .6s var(--ease) both;animation-delay:calc(.1s + var(--d) * .08s)}
+.bkq-opt b{width:30px;height:30px;flex-shrink:0;border-radius:8px;display:grid;place-items:center;font-family:"Black Ops One",system-ui;font-weight:400;color:#05110a;background:#22d3ee}
+.bkq-opt.ok{border-color:var(--g);background:rgba(57,255,136,.14);box-shadow:0 0 24px -6px var(--g);transform:scale(1.02)}
+.bkq-opt.ok b{background:var(--g)}
+.bkq-opt.no{opacity:.4}
+.bkq-nav{display:flex;align-items:center;gap:10px}
+.bkq-count{font-size:13px;letter-spacing:.14em;color:rgba(214,255,226,.7);min-width:60px;text-align:center}
+.bkq-key{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;animation:bkIn .5s var(--ease)}
+.bkq-key span{padding:3px 8px;border-radius:6px;background:rgba(57,255,136,.12);color:var(--g);border:1px solid rgba(57,255,136,.35)}
+
+/* M5 speech */
+.bks{position:absolute;inset:0;display:flex;flex-direction:column;padding:50px 18px 16px;gap:12px}
+.bks-stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;gap:16px;min-height:0}
+.bks-mic{height:min(78%,200px);filter:drop-shadow(0 0 24px rgba(57,255,136,.25))}
+.bk-slide.active .bks-mic{animation:bkIn .9s var(--ease) .4s both,bksFloat 3s ease-in-out 1.3s infinite alternate}
+@keyframes bksFloat{to{translate:0 -6px}}
+.bks-rec{fill:#5a636d;transition:fill .3s}
+.live .bks-rec{fill:var(--red);animation:bkBlink 1s steps(2) infinite}
+.bks-eq{display:flex;align-items:center;gap:5px;height:110px}
+.bks-eq i{width:7px;height:20%;border-radius:4px;background:linear-gradient(var(--g),#0f8a46);opacity:.5}
+.bk-slide.active .bks-eq i{animation:bksEq 1.4s ease-in-out infinite alternate}
+.live .bks-eq i{opacity:1;animation-duration:.45s!important;box-shadow:0 0 10px var(--g)}
+.bks-eq i:nth-child(1){animation-delay:-.2s}.bks-eq i:nth-child(2){animation-delay:-.7s}.bks-eq i:nth-child(3){animation-delay:-.4s}
+.bks-eq i:nth-child(4){animation-delay:-1s}.bks-eq i:nth-child(5){animation-delay:-.1s}.bks-eq i:nth-child(6){animation-delay:-.55s}.bks-eq i:nth-child(7){animation-delay:-.85s}
+.bks-eq.l{flex-direction:row-reverse}
+@keyframes bksEq{to{height:95%}}
+.bks-time{position:absolute;right:4px;top:0;width:96px;height:96px;display:grid;place-items:center;align-content:center}
+.bks-time svg{position:absolute;inset:0;rotate:-90deg}
+.bks-time circle{fill:rgba(4,16,10,.85);stroke:rgba(57,255,136,.15);stroke-width:7}
+.bks-time .bks-arc{fill:none;stroke:var(--amber);stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear}
+.bks-time b{position:relative;font:400 24px "Black Ops One",system-ui;color:#effff3}
+.bks-time small{position:relative;font-size:9px;letter-spacing:.2em;color:rgba(214,255,226,.55)}
+.live .bks-time .bks-arc{stroke:var(--g)}
+.low .bks-time .bks-arc{stroke:var(--red)}
+.low .bks-time b{color:var(--red);animation:bkBlink .5s steps(2) infinite}
+.bks-teams{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bks-go{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;cursor:pointer;font-family:inherit;color:#d6ffe2;text-align:left;
+  background:rgba(4,16,10,.85);border:1.5px solid rgba(57,255,136,.25);transition:all .35s var(--spring)}
+.bks-go:hover{border-color:rgba(57,255,136,.7);transform:translateY(-2px)}
+.bks-go em{font-style:normal;font-size:11px;letter-spacing:.1em;color:var(--amber)}
+.bks-go.on{border-color:var(--g);background:rgba(57,255,136,.14);box-shadow:0 0 22px -6px var(--g)}
+.bks-go.on em{color:var(--red)}
+.bks-tips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.bks-tips span{padding:4px 10px;border-radius:99px;font:600 12px "Plus Jakarta Sans",system-ui;color:#1a1000;background:rgba(255,176,32,.85)}
+
+@media (max-width:900px){
+  .bk-vis{max-width:520px;margin:0 auto;width:100%}
+  .bk-vis.vis-quiz{text-align:left}
+  .bks-eq{display:none}
+}
+
+.bk-mission.m-spiral,.bk-mission.m-quiz{grid-template-columns:1.15fr .85fr}
+@media (max-width:900px){.bk-mission.m-spiral,.bk-mission.m-quiz{grid-template-columns:1fr}}

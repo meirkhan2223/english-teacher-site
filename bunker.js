@@ -1,13 +1,128 @@
 'use strict';
 /* ============ Bunker: The Last Code — presentation & game ============ */
 
-/* ---- MISSIONS: edit the task text and photo here ----
-   image: put a photo in the "images" folder, e.g. 'images/mission1.jpg' */
-const MISSIONS = [1, 2, 3, 4, 5].map(n => ({
-  title: `Mission ${n}`,
-  task: 'The task for this mission will be added here.',
-  image: ''
-}));
+/* ---- MISSIONS: edit the task texts here ---- */
+const MISSIONS = [
+  { title: 'Mirror Code', vis: 'mirror',
+    task: 'Use the mirror to read the secret message. Tell your team what you see. Write the sentence correctly on your answer sheet.',
+    secret: 'WHILE THE TEAM WAS SEARCHING THE BUNKER THE GUARD WAS WATCHING THEM FROM THE CONTROL ROOM' },
+  { title: 'Cup Sentences', vis: 'cups',
+    task: 'Read the sentences on the cups. Match each English sentence with its Kazakh translation. Put the translation next to the correct cup. Write your answers on the answer sheet.' },
+  { title: 'Spiral Text', vis: 'spiral',
+    task: 'One player listens to the text through headphones and reads it aloud. The other players listen and fill in the missing Past Simple verbs. Work together and complete the text.',
+    /* verbs in [brackets] are hidden on the board until the teacher reveals them */
+    text: '1. Yesterday, Team Alpha [entered] the bunker. 2. It [was raining] outside. 3. The team [was looking] for the secret code. 4. Suddenly, they [heard] a loud noise. 5. While Mia [was checking] the map, Tom [found] a key. 6. The lights [were flickering] when the alarm [started]. 7. The guard [was watching] the team from the control room. 8. The students [opened] a small box. 9. While they [were reading] the note, the door [closed]. 10. They [found] the code and [escaped] safely.' },
+  { title: 'Grammar Fight', vis: 'quiz',
+    task: 'Choose the correct answer for each question. Write the number and the letter on your answer sheet. Be quick and accurate!' },
+  { title: 'Captain’s Speech', vis: 'speech',
+    task: 'Each captain must defend their team. Say at least three Past Simple sentences. Explain why your team should stay in the bunker.' }
+];
+
+/* Mission 4 questions: a = index of the correct option (0 = A, 1 = B, 2 = C) */
+const GRAMMAR_FIGHT = [
+  { q: 'Yesterday, the team _ the bunker.', kz: 'Кеше топ бункерге кірді.', o: ['enter', 'entered', 'was entering'], a: 1 },
+  { q: 'The guard _ the team when the lights went out.', kz: 'Жарық сөнгенде күзетші топты бақылап тұрды.', o: ['watched', 'was watching', 'watch'], a: 1 },
+  { q: 'The students _ the secret key near the door.', kz: 'Оқушылар есіктің жанынан құпия кілтті тапты.', o: ['found', 'were finding', 'find'], a: 0 },
+  { q: 'They _ TV when the lights went out.', kz: 'Жарық сөнгенде олар теледидар көріп отырды.', o: ['watched', 'were watching', 'watch'], a: 1 },
+  { q: 'What _ you doing when the alarm rang?', kz: 'Дабыл соғылғанда сен не істеп жаттың?', o: ['was', 'were', 'did'], a: 1 },
+  { q: 'At midnight, the bunker door _ suddenly.', kz: 'Түн ортасында бункердің есігі кенет ашылды.', o: ['opened', 'was opening', 'open'], a: 0 },
+  { q: 'We _ for the code when we heard a strange noise.', kz: 'Біртүрлі дыбыс естігенде, біз кодты іздеп жүрдік.', o: ['looked', 'were looking', 'look'], a: 1 },
+  { q: 'The captain _ the note and read it aloud.', kz: 'Капитан жазбаны алып, дауыстап оқыды.', o: ['took', 'was taking', 'takes'], a: 0 },
+  { q: 'At 8 o’clock, the agents _ inside the bunker.', kz: 'Сағат 8-де агенттер бункердің ішінде ұйықтап жатқан.', o: ['slept', 'were sleeping', 'sleep'], a: 1 },
+  { q: 'Choose the correct sentence.', kz: 'Дұрыс сөйлемді таңда.', o: ['They were running when the door closed.', 'They was running when the door closed.', 'They running when the door closed.'], a: 0 }
+];
+
+/* ---- mission graphics ---- */
+const VIS = {
+  mirror: m => `<div class="bkv-mirror">
+      <div class="bkv-flip">
+        <div class="bkv-face front"><small>// SECRET MESSAGE · USE THE MIRROR</small><p class="flipped">${esc(m.secret)}</p><i class="bkv-shine"></i></div>
+        <div class="bkv-face back"><small>// DECODED</small><p>${esc(m.secret)}</p></div>
+      </div>
+      <div class="bkv-glass" aria-hidden="true"><i></i></div>
+    </div>
+    <button class="bk-btn sm bkv-teach" data-reveal>Reveal answer</button>`,
+
+  cups: () => {
+    const pos = [[78, 120], [184, 96], [290, 124], [396, 98], [500, 122], [96, 286], [204, 262], [312, 290], [418, 264], [516, 288]];
+    const cup = ([x, y], i) => `<g transform="translate(${x} ${y})"><g class="bkv-cup" style="--d:${i}">
+        <ellipse cx="0" cy="86" rx="50" ry="13" fill="none" stroke="#ffe14d" stroke-width="5" opacity=".85"/>
+        <ellipse cx="0" cy="84" rx="34" ry="8" fill="#000" opacity=".35"/>
+        <path d="M-38 -10 L-27 82 Q0 92 27 82 L38 -10 Z" fill="url(#cupG)"/>
+        <path d="M-38 -10 L-27 82 Q-20 85 -14 86 L-22 -10 Z" fill="#fff" opacity=".18"/>
+        <ellipse cx="0" cy="-10" rx="38" ry="11" fill="#ffd6e7"/><ellipse cx="0" cy="-10" rx="32" ry="8" fill="#b0124f"/>
+        <rect x="-26" y="22" width="52" height="16" rx="3" fill="#fff" opacity=".9"/>
+        <path d="M-20 30 h40" stroke="#7a2a48" stroke-width="2" stroke-dasharray="5 3" opacity=".6"/>
+        <circle cx="0" cy="58" r="15" fill="#fff"/><text x="0" y="64" text-anchor="middle">${i + 1}</text>
+      </g></g>`;
+    return `<svg class="bkv-cups" viewBox="0 0 580 420" aria-hidden="true">
+      <defs><linearGradient id="cupG" x1="0" x2="1"><stop offset="0" stop-color="#ff5a9a"/><stop offset=".55" stop-color="#e8236f"/><stop offset="1" stop-color="#a30d4a"/></linearGradient>
+        <linearGradient id="paperG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c3326"/><stop offset="1" stop-color="#0d1b13"/></linearGradient></defs>
+      <rect x="18" y="20" width="544" height="384" rx="14" fill="url(#paperG)" stroke="rgba(57,255,136,.25)" stroke-dasharray="6 6"/>
+      ${pos.map(cup).join('')}
+    </svg>
+    <div class="bkv-kz k1">аударма?</div><div class="bkv-kz k2">аударма?</div><div class="bkv-kz k3">аударма?</div>
+    <div class="bkv-legend"><span>EN</span> sentence on the cup <b>⟶</b> <span class="kz">KZ</span> translation in the ring</div>`;
+  },
+
+  spiral: m => {
+    const parts = m.text.split(/\[([^\]]+)\]/);
+    const len = parts.reduce((s, p) => s + p.length, 0);
+    const F = 20, CW = F * .6, GAP = 29, R0 = 66, C = 310;
+    let th = -Math.PI / 2, r = R0, L = 0, pts = [];
+    let px = C + r * Math.cos(th), py = C + r * Math.sin(th);
+    pts.push(`M${px.toFixed(1)} ${py.toFixed(1)}`);
+    while (L < len * CW * 1.04 + 40) {
+      th += .04; r = R0 + GAP * (th + Math.PI / 2) / (2 * Math.PI);
+      const x = C + r * Math.cos(th), y = C + r * Math.sin(th);
+      L += Math.hypot(x - px, y - py); px = x; py = y; pts.push(`L${x.toFixed(1)} ${y.toFixed(1)}`);
+    }
+    const tsp = parts.map((p, i) => i % 2 ? `<tspan class="gap" data-v="${esc(p)}">${'_'.repeat(p.length)}</tspan>` : esc(p)).join('');
+    const half = Math.ceil(r + F + 6), vb = `${C - half} ${C - half} ${half * 2} ${half * 2}`;
+    return `<svg class="bkv-spiral" viewBox="${vb}" aria-hidden="true">
+      <defs><path id="bkSpiralPath" d="${pts.join('')}"/></defs>
+      <g class="bkv-sp-rot">
+        <use href="#bkSpiralPath" fill="none" stroke="rgba(57,255,136,.08)" stroke-width="${GAP - 4}"/>
+        <text font-size="${F}"><textPath href="#bkSpiralPath">${tsp}</textPath></text>
+      </g>
+      <circle class="bkv-ring r1" cx="${C}" cy="${C}" r="44"/><circle class="bkv-ring r2" cx="${C}" cy="${C}" r="44"/>
+      <circle cx="${C}" cy="${C}" r="44" fill="url(#sunG)"/>
+      <defs><radialGradient id="sunG" cx="40%" cy="35%"><stop offset="0" stop-color="#ffe6a3"/><stop offset="1" stop-color="#f5a623"/></radialGradient></defs>
+      <g transform="translate(${C - 20} ${C - 20}) scale(1.66)" fill="none" stroke="#3a2200" stroke-width="2.2" stroke-linecap="round">
+        <path d="M3 15v-3a9 9 0 0 1 18 0v3"/><rect x="2" y="14" width="5" height="7" rx="2" fill="#3a2200"/><rect x="17" y="14" width="5" height="7" rx="2" fill="#3a2200"/></g>
+    </svg>
+    <button class="bk-btn sm bkv-teach" data-reveal>Show verbs</button>`;
+  },
+
+  quiz: () => `<div class="bkq">
+      <div class="bkq-pips">${GRAMMAR_FIGHT.map((_, i) => `<button data-q="${i}">${i + 1}</button>`).join('')}</div>
+      <div class="bkq-stage"><div class="bkq-card"></div></div>
+      <div class="bkq-nav">
+        <button class="bk-btn sm" data-qstep="-1" aria-label="Previous question">${I('left')}</button>
+        <span class="bkq-count"></span>
+        <button class="bk-btn sm" data-qstep="1" aria-label="Next question">${I('arrow')}</button>
+        <button class="bk-btn sm bkv-teach static" data-reveal>Show answers</button>
+      </div>
+    </div>`,
+
+  speech: () => `<div class="bks">
+      <div class="bks-stage">
+        <div class="bks-eq l">${'<i></i>'.repeat(7)}</div>
+        <svg class="bks-mic" viewBox="0 0 120 170" aria-hidden="true">
+          <defs><linearGradient id="micG" x1="0" x2="1"><stop offset="0" stop-color="#9aa4ae"/><stop offset=".45" stop-color="#eef2f5"/><stop offset="1" stop-color="#59626c"/></linearGradient></defs>
+          <rect x="34" y="6" width="52" height="84" rx="26" fill="url(#micG)" stroke="#2b3138" stroke-width="3"/>
+          ${[22, 34, 46, 58, 70].map(y => `<path d="M40 ${y}h40" stroke="#4b545d" stroke-width="2.4" opacity=".55"/>`).join('')}
+          <path d="M20 62a40 40 0 0 0 80 0" fill="none" stroke="#c9d0d7" stroke-width="6" stroke-linecap="round"/>
+          <path d="M60 102v34M36 150h48" stroke="#c9d0d7" stroke-width="7" stroke-linecap="round"/>
+          <circle class="bks-rec" cx="60" cy="118" r="5"/>
+        </svg>
+        <div class="bks-eq r">${'<i></i>'.repeat(7)}</div>
+        <div class="bks-time"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44"/><circle class="bks-arc" cx="50" cy="50" r="44" pathLength="100"/></svg><b>1:00</b><small>SPEECH</small></div>
+      </div>
+      <div class="bks-teams">${[0, 1].map(t => `<button class="bks-go" data-cap="${t}" data-t="${t}"><span class="bkm-badge">${t ? 'B' : 'A'}</span><span class="bkm-name"></span><em>▶ 60s</em></button>`).join('')}</div>
+      <div class="bks-tips"><span>Yesterday we…</span><span>We worked together and…</span><span>We found…</span><span>We never gave up!</span></div>
+    </div>`
+};
 
 const randCode = () => String(Math.floor(10000 + Math.random() * 90000));
 function getBunker() {
@@ -59,12 +174,8 @@ function viewBunker() {
   const card = (icon, label, value, d, wide = false) => `<div class="bk-card bk-a ${wide ? 'wide' : ''}" style="--d:${d}">
     <span class="bk-card-ic">${I(icon)}</span><div><small>${label}</small><p>${value}</p></div></div>`;
   const dust = Array.from({ length: 26 }, () => `<i style="left:${Math.random() * 100}%;animation-delay:${(-Math.random() * 14).toFixed(1)}s;animation-duration:${(9 + Math.random() * 10).toFixed(1)}s;--s:${(1 + Math.random() * 2.5).toFixed(1)}px"></i>`).join('');
-  const photo = (m, n) => m.image
-    ? `<img src="${esc(m.image)}" alt="${esc(m.title)}">`
-    : `<div class="bk-ph-empty">${I('board')}<b>PHOTO ${n}</b><small>add images/mission${n}.jpg</small></div>`;
-
-  const missionSlides = MISSIONS.map((m, i) => `<div class="bk-split bk-mission">
-      <div class="bk-a bk-photo"><span class="bk-photo-tag">M${i + 1}</span>${photo(m, i + 1)}</div>
+  const missionSlides = MISSIONS.map((m, i) => `<div class="bk-split bk-mission m-${m.vis}">
+      <div class="bk-a bk-vis vis-${m.vis}"><span class="bk-photo-tag">M${i + 1}</span>${VIS[m.vis](m)}</div>
       <div>
         <span class="bk-kicker bk-a">// MISSION ${i + 1} OF ${MISSIONS.length}</span>
         <h2 class="bk-h bk-a" style="--d:1">${esc(m.title)}</h2>
@@ -243,6 +354,56 @@ function viewBunker() {
           stop() { cancelAnimationFrame(raf); raf = 0; }
         };
       })();
+      /* ---- mission 4: Grammar Fight quiz ---- */
+      const quiz = $('.bkq', bk);
+      let qi = 0, qShow = false;
+      const blank = (s, ans) => esc(s).replace('_', `<span class="bkq-blank">${qShow && ans ? esc(ans) : ''}</span>`);
+      const renderQ = (dir = 0) => {
+        const Q = GRAMMAR_FIGHT[qi], c = $('.bkq-card', quiz);
+        c.innerHTML = `<span class="bkq-num">QUESTION ${qi + 1}</span>
+          <p class="bkq-q">${blank(Q.q, Q.q.includes('_') ? Q.o[Q.a] : '')}</p><p class="bkq-kz">${esc(Q.kz)}</p>
+          <div class="bkq-opts">${Q.o.map((o, i) => `<div class="bkq-opt ${qShow ? i === Q.a ? 'ok' : 'no' : ''}" style="--d:${i}"><b>${'ABC'[i]}</b><span>${esc(o)}</span></div>`).join('')}</div>`;
+        c.classList.remove('in-l', 'in-r'); void c.offsetWidth; if (dir) c.classList.add(dir > 0 ? 'in-r' : 'in-l');
+        $$('.bkq-pips button', quiz).forEach((b, i) => { b.classList.toggle('on', i === qi); b.classList.toggle('seen', i < qi); });
+        $('.bkq-count', quiz).textContent = `${qi + 1} / ${GRAMMAR_FIGHT.length}`;
+        $('[data-reveal]', quiz).textContent = qShow ? 'Hide answers' : 'Show answers';
+        $('.bkq-key', bk)?.remove();
+        if (qShow) quiz.insertAdjacentHTML('beforeend', `<div class="bkq-key">${GRAMMAR_FIGHT.map((q, i) => `<span>${i + 1}–${'ABC'[q.a]}</span>`).join('')}</div>`);
+      };
+      const stepQ = d => { const n = Math.max(0, Math.min(GRAMMAR_FIGHT.length - 1, qi + d)); if (n !== qi) { qi = n; renderQ(d); beep(560 + qi * 30, .05, 'square', .035); } };
+      renderQ();
+
+      /* ---- mission 3: spiral gaps ---- */
+      const paintSpiral = on => $$('.bkv-spiral .gap', bk).forEach(g => g.textContent = on ? g.dataset.v : '_'.repeat(g.dataset.v.length));
+
+      /* ---- mission 5: speech timer ---- */
+      const sp = $('.bks', bk);
+      let spIv = 0, spLeft = 60, spWho = null;
+      const paintSpeech = () => {
+        $('.bks-time b', sp).textContent = `${Math.floor(spLeft / 60)}:${String(spLeft % 60).padStart(2, '0')}`;
+        $('.bks-arc', sp).style.strokeDashoffset = 100 - spLeft / 60 * 100;
+        sp.classList.toggle('live', spWho != null); sp.classList.toggle('low', spWho != null && spLeft <= 10);
+        $$('.bks-go', sp).forEach(b => { const on = +b.dataset.cap === spWho; b.classList.toggle('on', on); $('em', b).textContent = on ? '■ STOP' : '▶ 60s'; });
+      };
+      const stopSpeech = () => { clearInterval(spIv); spIv = 0; spWho = null; spLeft = 60; paintSpeech(); };
+      const startSpeech = t => {
+        if (spWho === t) return stopSpeech();
+        clearInterval(spIv); spWho = t; spLeft = 60; paintSpeech(); beep(880, .1, 'square', .05);
+        spIv = setInterval(() => {
+          spLeft--; paintSpeech();
+          if (spLeft <= 5 && spLeft > 0) beep(700, .06, 'square', .04);
+          if (spLeft <= 0) { beep(220, .6, 'sawtooth', .07); toast(`Time! ${st.teams[t].name}’s captain finished the speech`); clearInterval(spIv); spIv = 0; timers.push(setTimeout(stopSpeech, 1200)); }
+        }, 1000);
+      };
+      paintSpeech();
+
+      const hideReveals = () => {
+        $$('.bk-vis.revealed', bk).forEach(v => v.classList.remove('revealed'));
+        $$('.bkv-mirror ~ [data-reveal]', bk).forEach(b => b.textContent = 'Reveal answer');
+        $$('.bkv-spiral ~ [data-reveal]', bk).forEach(b => b.textContent = 'Show verbs');
+        paintSpiral(false); if (qShow) { qShow = false; renderQ(); }
+      };
+
       /* ---- keep every slide in sync with the saved game ---- */
       const firstOf = m => { const [a, b] = st.teams.map(t => t.got[m]); return a && (!b || a <= b) ? 0 : b ? 1 : -1; };
       const sync = () => {
@@ -291,6 +452,7 @@ function viewBunker() {
           timers.push(setTimeout(() => old.classList.remove('leaving', 'to-left', 'to-right'), 900));
           pulse('flash'); beep(n > cur ? 520 : 440, .07, 'square', .04);
         }
+        hideReveals(); if (spWho != null) stopSpeech();
         cur = n; els[n].classList.add('active'); sync();
         $$('.bk-dots button', bk).forEach((b, i) => b.classList.toggle('on', i === n));
         $('#bkCount', bk).textContent = `${String(n + 1).padStart(2, '0')} / ${String(els.length).padStart(2, '0')}`;
@@ -309,6 +471,20 @@ function viewBunker() {
 
       /* ---- mark missions ---- */
       $('.bk-slides', bk).addEventListener('click', e => {
+        const rv = e.target.closest('[data-reveal]');
+        if (rv) {
+          const vis = rv.closest('.bk-vis');
+          if (vis.classList.contains("vis-quiz")) { qShow = !qShow; renderQ(); }
+          else {
+            const on = vis.classList.toggle('revealed');
+            if (vis.classList.contains("vis-spiral")) { paintSpiral(on); rv.textContent = on ? 'Hide verbs' : 'Show verbs'; }
+            else rv.textContent = on ? 'Hide answer' : 'Reveal answer';
+          }
+          beep(qShow || vis.classList.contains('revealed') ? 900 : 500, .08, 'square', .04); return;
+        }
+        const qb = e.target.closest('[data-q]'); if (qb) { const n = +qb.dataset.q; if (n !== qi) { const d = n > qi ? 1 : -1; qi = n; renderQ(d); } return; }
+        const qs = e.target.closest('[data-qstep]'); if (qs) return stepQ(+qs.dataset.qstep);
+        const cp = e.target.closest('[data-cap]'); if (cp) return startSpeech(+cp.dataset.cap);
         const b = e.target.closest('.bk-mark'); if (!b) return;
         const t = +b.dataset.t, m = +b.dataset.m, team = st.teams[t];
         team.got[m] = team.got[m] ? 0 : Date.now(); save(); sync();
@@ -394,6 +570,7 @@ function viewBunker() {
         if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
         else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
         else if (e.key === 'f' || e.key === 'F') fs();
+        else if ($('.bkq', els[cur]) && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); stepQ(e.key === 'ArrowDown' ? 1 : -1); }
         else if ($('.bk-keys', els[cur])) {
           if (/^\d$/.test(e.key)) press(e.key);
           else if (e.key === 'Enter') press('OK');
@@ -403,7 +580,7 @@ function viewBunker() {
       document.addEventListener('keydown', key);
       go(0);
       return () => {
-        document.removeEventListener('keydown', key); clearInterval(clockIv); timers.forEach(clearTimeout); token++; demo.stop();
+        document.removeEventListener('keydown', key); clearInterval(clockIv); clearInterval(spIv); timers.forEach(clearTimeout); token++; demo.stop();
         if (document.fullscreenElement) document.exitFullscreen();
       };
     }
