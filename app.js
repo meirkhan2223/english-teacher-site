@@ -33,7 +33,11 @@ const ICONS = {
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>', refresh: '<path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7"/>',
   mega: '<path d="M3 11v2a2 2 0 002 2h2l6 4V5L7 9H5a2 2 0 00-2 2z"/><path d="M17 8a5 5 0 010 8"/>',
   bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0012 3z"/>',
-  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', eraser: '<path d="M16 3l5 5-11 11H5l-2-2z"/><path d="M9 9l6 6M10 19h11"/>'
+  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', eraser: '<path d="M16 3l5 5-11 11H5l-2-2z"/><path d="M9 9l6 6M10 19h11"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/><circle cx="12" cy="16" r="1.4"/>',
+  unlock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 017.6-1.7"/><circle cx="12" cy="16" r="1.4"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'
 };
 const I = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -105,6 +109,7 @@ const DEFAULT_CLASSES = [
 const DEFAULT_NAMES = ['Aruzhan', 'Dias', 'Amina', 'Alikhan', 'Dana', 'Nursultan', 'Aisha', 'Temirlan'];
 
 const TOOLS = [
+  { id: 'bunker', title: 'Bunker: The Last Code', desc: 'Past Simple team escape game — presentation', icon: 'lock', color: 'coral', tag: 'NEW' },
   { id: 'create', title: 'Quiz Builder', desc: 'Build multiple-choice quizzes in minutes', icon: 'edit', color: 'violet' },
   { id: 'flashcards', title: 'Flashcards', desc: 'Flip, listen and learn new words', icon: 'cards', color: 'sky' },
   { id: 'scramble', title: 'Word Scramble', desc: 'Unscramble the letters to spell the word', icon: 'shuffle', color: 'pink' },
@@ -116,7 +121,7 @@ const TOOLS = [
 ];
 
 const NAV = [
-  ['home', 'Dashboard', 'home', 'violet'], ['classes', 'My Classes', 'users', 'sky'], ['create', 'Quiz Builder', 'edit', 'pink'],
+  ['home', 'Dashboard', 'home', 'violet'], ['bunker', 'Bunker Game', 'lock', 'coral'], ['classes', 'My Classes', 'users', 'sky'], ['create', 'Quiz Builder', 'edit', 'pink'],
   ['flashcards', 'Flashcards', 'cards', 'teal'], ['games', 'Games', 'gamepad', 'mint'], ['grammar', 'Grammar', 'abc', 'sun'],
   ['wheel', 'Spin the Wheel', 'wheel', 'coral'], ['timer', 'Class Timer', 'timer', 'indigo'], ['board', 'Whiteboard', 'board', 'sky'],
   ['courses', 'Courses', 'cap', 'violet']
@@ -505,7 +510,7 @@ function viewFlashcards() {
 }
 
 function viewGames() {
-  const games = [TOOLS[2], TOOLS[3], TOOLS[1], TOOLS[5]];
+  const games = ['bunker', 'scramble', 'match', 'flashcards', 'wheel'].map(id => TOOLS.find(t => t.id === id));
   return { html: `${pageHead('Games', 'Interactive word games to play together in class', 'gamepad', 'mint')}
     <section class="block glass reveal" style="--i:1"><div class="block-head"><h2>Choose a game</h2><p>All games use your vocabulary deck</p></div>
     <div class="tool-grid">${toolCards(games)}</div></section>` };
@@ -786,7 +791,7 @@ function viewCourses() {
 
 /* ================= Router ================= */
 const ROUTES = { home: viewHome, classes: viewClasses, create: viewCreate, play: viewPlay, flashcards: viewFlashcards, games: viewGames,
-  scramble: viewScramble, match: viewMatch, grammar: viewGrammar, wheel: viewWheel, timer: viewTimer, board: viewBoard, courses: viewCourses };
+  scramble: viewScramble, match: viewMatch, grammar: viewGrammar, wheel: viewWheel, timer: viewTimer, board: viewBoard, courses: viewCourses, bunker: viewBunker };
 let cleanup = null, first = true;
 
 function setActive(name, arg) {
