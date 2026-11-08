@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EnglishSpace — Teacher Studio</title>
+  <meta name="description" content="Create quizzes, flashcards and games for English lessons.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='28' fill='%236d5dfc'/><text x='50' y='68' font-size='52' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'>Ee</text></svg>">
+</head>
+<body>
+  <div class="bg-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <a href="#home" class="brand">
+      <div class="logo"><span>Ee</span></div>
+      <div><b>EnglishSpace</b><small>Teacher Studio</small></div>
+    </a>
+    <nav class="nav" id="nav"><span class="nav-indicator" id="navInd"></span></nav>
+    <div class="side-card">
+      <div class="side-card-ic" id="tipIcon"></div>
+      <b>Tip of the day</b>
+      <p id="tip"></p>
+    </div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu"></button>
+      <div class="marquee"><div class="marquee-track" id="marquee"></div></div>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle theme"></button>
+      <div class="avatar" title="Teacher">T</div>
+    </header>
+    <div id="view" class="view"></div>
+    <footer class="footer">Made with ♥ for English teachers · EnglishSpace</footer>
+  </main>
+
+  <div id="toasts" class="toasts"></div>
+  <canvas id="confetti" class="confetti"></canvas>
+  <script src="app.js"></script>
+</body>
+</html>
