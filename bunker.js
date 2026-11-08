@@ -60,10 +60,10 @@ function viewBunker() {
       <h2 class="bk-h bk-a" style="--d:1">Bunker: The Last Code</h2>
       <div class="bk-stamp">CLASSIFIED</div>
       <div class="bk-cards">
-        ${card('users', 'Қатысушылар', '5 оқушыдан құралған екі топ', 2)}
-        ${card('timer', 'Ұзақтығы', '45 минут', 3)}
-        ${card('abc', 'Грамматикалық тақырып', 'Past Simple', 4)}
-        ${card('target', 'Мақсаты', 'Оқушылардың Past Simple шағын тапсырмалар арқылы қолдануын, топпен жұмыс істеуін және жылдам шешім қабылдауын дамыту.', 5, true)}
+        ${card('users', 'Participants', 'Two teams of 5 students', 2)}
+        ${card('timer', 'Duration', '45 minutes', 3)}
+        ${card('abc', 'Grammar focus', 'Past Simple', 4)}
+        ${card('target', 'Objective', 'To develop students’ use of the Past Simple through short tasks, as well as their teamwork and quick decision-making skills.', 5, true)}
       </div>
     </div>`,
     `<div class="bk-split">
