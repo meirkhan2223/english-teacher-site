@@ -58,7 +58,14 @@ h1,h2,h3{letter-spacing:-.02em;line-height:1.15}
   border-right:1px solid var(--border);z-index:20;overflow-y:auto}
 .brand{display:flex;align-items:center;gap:12px;padding:4px 8px}
 .brand b{display:block;font-size:19px;font-weight:800;background:linear-gradient(90deg,var(--primary),var(--primary2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.brand small{color:var(--muted);font-size:12px;font-weight:600}
+.brand{align-items:center}
+.brand-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.brand-name{display:block;font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;margin-top:3px;animation:nameIn .9s var(--ease) .2s both}
+.brand small,.profile-text small{display:block;color:var(--muted);font-size:12px;font-weight:600;margin-top:2px}
+.sub-in{animation:subIn 1s var(--ease) .55s both}
+.name-in{animation:nameIn .9s var(--ease) .2s both}
+@keyframes nameIn{from{opacity:0;translate:-14px 0;filter:blur(6px)}to{opacity:1;translate:0 0;filter:blur(0)}}
+@keyframes subIn{from{opacity:0;translate:0 8px;letter-spacing:.2em}to{opacity:1;translate:0 0;letter-spacing:.02em}}
 .logo{position:relative;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;overflow:hidden;
   background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-weight:800;box-shadow:0 8px 20px -6px rgba(109,93,252,.7)}
 .logo::before{content:"";position:absolute;inset:-50%;background:conic-gradient(from 0deg,transparent,rgba(255,255,255,.55),transparent 30%);animation:spin 4s linear infinite}
@@ -109,9 +116,8 @@ h1,h2,h3{letter-spacing:-.02em;line-height:1.15}
 .profile{display:flex;align-items:center;gap:12px;padding:4px 4px 4px 16px;border-radius:99px;background:var(--panel);border:1px solid var(--border);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex-shrink:0;transition:box-shadow .3s,transform .35s var(--spring)}
 .profile:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
-.profile-text{text-align:right;line-height:1.2}
+.profile-text{display:flex;flex-direction:column;align-items:flex-end;text-align:right;line-height:1.2}
 .profile-text b{display:block;font-size:14px;font-weight:800;white-space:nowrap}
-.profile-text small{font-size:12px;color:var(--muted);font-weight:600}
 .avatar{font-size:14px}
 @media (max-width:1000px){.profile-text{display:none}.profile{padding:4px;background:none;border:0}}
 .footer{text-align:center;color:var(--muted);font-size:13px;padding:40px 0 8px}
