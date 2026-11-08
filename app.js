@@ -827,7 +827,7 @@ function initShell() {
   $('#overlay').onclick = closeMenu;
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
-  const msgs = [['mega', 'Welcome back, teacher! Ready for a great lesson today?'], ['sparkles', 'New: Spin the Wheel and Class Timer are ready to use'],
+  const msgs = [['mega', 'Welcome back, Nurkhanym Raiyskizi! Ready for a great lesson today?'], ['sparkles', 'New: Spin the Wheel and Class Timer are ready to use'],
     ['cards', 'Tip: press ← → and Space on the Flashcards page'], ['edit', 'Build your own quiz in under 2 minutes'], ['gamepad', 'Try Word Scramble and Match Up with your class']];
   const row = msgs.map(([i, t]) => `<span>${I(i)} ${t}</span>`).join('');
   $('#marquee').innerHTML = row + row;

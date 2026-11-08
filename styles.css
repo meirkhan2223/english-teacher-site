@@ -106,6 +106,14 @@ h1,h2,h3{letter-spacing:-.02em;line-height:1.15}
 .menu-btn{display:none}
 .avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;flex-shrink:0;
   background:linear-gradient(135deg,var(--pink),var(--sun));box-shadow:0 0 0 3px var(--panel-solid),0 0 0 5px color-mix(in srgb,var(--pink) 40%,transparent)}
+.profile{display:flex;align-items:center;gap:12px;padding:4px 4px 4px 16px;border-radius:99px;background:var(--panel);border:1px solid var(--border);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex-shrink:0;transition:box-shadow .3s,transform .35s var(--spring)}
+.profile:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.profile-text{text-align:right;line-height:1.2}
+.profile-text b{display:block;font-size:14px;font-weight:800;white-space:nowrap}
+.profile-text small{font-size:12px;color:var(--muted);font-weight:600}
+.avatar{font-size:14px}
+@media (max-width:600px){.profile-text{display:none}.profile{padding:4px;background:none;border:0}}
 .footer{text-align:center;color:var(--muted);font-size:13px;padding:40px 0 8px}
 
 /* ============ View transitions ============ */
@@ -482,7 +490,6 @@ textarea{resize:vertical;line-height:1.6}
   .block{padding:18px;border-radius:22px}
   .fc-scene{height:290px}
   #board{height:420px}
-  .avatar{display:none}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
