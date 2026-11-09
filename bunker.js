@@ -137,6 +137,77 @@ function getBunker() {
   return s;
 }
 
+/* ---- bunker soundtrack: generated live with WebAudio (no files needed) ---- */
+function bunkerMusic() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx = null, master, duck, comp, delay, fb, noiseBuf, iv = 0, step = 0, nextT = 0, playing = false;
+  const BPM = 96, S16 = 60 / BPM / 4, VOL = .32;
+  const hz = n => 440 * Math.pow(2, (n - 69) / 12);
+  /* A minor: Am – F – G – Em, one chord per bar */
+  const ROOT = [33, 29, 31, 28], CH = [[57, 60, 64, 69], [53, 57, 60, 65], [55, 59, 62, 67], [52, 55, 59, 64]];
+  const ARP = [0, 1, 2, 3, 2, 1, 0, 2, 1, 3, 2, 0, 3, 1, 2, 3];
+  const init = () => {
+    ctx = new AC();
+    comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 4;
+    master = ctx.createGain(); master.gain.value = 0; duck = ctx.createGain(); duck.gain.value = 1;
+    master.connect(duck).connect(comp).connect(ctx.destination);
+    delay = ctx.createDelay(1); delay.delayTime.value = S16 * 3; fb = ctx.createGain(); fb.gain.value = .38;
+    const dl = ctx.createBiquadFilter(); dl.type = 'lowpass'; dl.frequency.value = 2200;
+    delay.connect(dl).connect(fb).connect(delay); dl.connect(master);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    /* drone pad */
+    const pf = ctx.createBiquadFilter(); pf.type = 'lowpass'; pf.frequency.value = 380; pf.Q.value = 6;
+    const pg = ctx.createGain(); pg.gain.value = .16; pf.connect(pg).connect(master);
+    [[45, -9], [45, 8], [52, 4], [33, 0]].forEach(([n, det]) => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = hz(n); o.detune.value = det; o.connect(pf); o.start(); });
+    const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = .07; lg.gain.value = 260; lfo.connect(lg).connect(pf.frequency); lfo.start();
+  };
+  const env = (g, t, a, peak, dec) => { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); };
+  const voice = (type, f, t, peak, dec, cut, dest = master, a = .005) => {
+    const o = ctx.createOscillator(), g = ctx.createGain(), fl = ctx.createBiquadFilter();
+    o.type = type; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.setValueAtTime(cut, t); fl.frequency.exponentialRampToValueAtTime(Math.max(120, cut / 5), t + dec);
+    env(g, t, a, peak, dec); o.connect(fl).connect(g).connect(dest); o.start(t); o.stop(t + a + dec + .05);
+  };
+  const kick = t => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(38, t + .18);
+    env(g, t, .004, .9, .32); o.connect(g).connect(master); o.start(t); o.stop(t + .4);
+  };
+  const hat = (t, v) => {
+    const n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    n.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = 7500; env(g, t, .002, v, .045);
+    n.connect(f).connect(g).connect(master); n.start(t, Math.random() * .5); n.stop(t + .08);
+  };
+  const ping = t => { voice('sine', 1760, t, .12, 1.4, 6000, delay); voice('sine', 1760, t, .07, 1.2, 6000); };
+  const tick = () => {
+    while (nextT < ctx.currentTime + .15) {
+      const t = nextT, s = step % 16, bar = Math.floor(step / 16), c = bar % 4, sec = Math.floor(bar / 4) % 4;
+      if (s === 0 || s === 8 || (sec >= 2 && s === 11)) kick(t);
+      if (sec >= 1) hat(t, s % 4 === 2 ? .09 : .035);
+      if (s % 2 === 0) voice('sawtooth', hz(ROOT[c] + (s === 6 || s === 14 ? 12 : 0)), t, .3, S16 * 1.8, 900);
+      if (sec === 1 || sec === 3) voice('square', hz(CH[c][ARP[s]] + 12), t, .045, S16 * 1.6, 3200, s % 4 === 0 ? delay : master);
+      if (sec === 2 && s % 8 === 4) voice('triangle', hz(CH[c][3] + 12), t, .08, S16 * 6, 2400, delay, .04);
+      if (s === 0 && bar % 8 === 7) ping(t);
+      nextT += S16; step++;
+    }
+  };
+  return {
+    get on() { return playing; },
+    start() {
+      if (!AC) return; if (!ctx) init();
+      ctx.resume(); if (playing) return; playing = true;
+      nextT = ctx.currentTime + .1; step = 0; clearInterval(iv); iv = setInterval(tick, 25);
+      master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setTargetAtTime(VOL, ctx.currentTime, .8);
+    },
+    stop(close = false) {
+      if (!ctx) return; playing = false; clearInterval(iv);
+      master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setTargetAtTime(0, ctx.currentTime, .25);
+      if (close) { const c = ctx; ctx = null; setTimeout(() => c.close(), 900); }
+    },
+    duck(on) { if (ctx) duck.gain.setTargetAtTime(on ? .3 : 1, ctx.currentTime, .4); }
+  };
+}
+
 function vault(id = '') {
   const bolts = Array.from({ length: 16 }, (_, i) => {
     const a = i / 16 * Math.PI * 2;
@@ -276,6 +347,7 @@ function viewBunker() {
         <div class="bk-dots">${slides.map((_, i) => `<button data-go="${i}" aria-label="Slide ${i + 1}"></button>`).join('')}</div>
         <span class="bk-count" id="bkCount"></span>
         <button class="bk-btn" id="bkNext" aria-label="Next">${I('right')}</button>
+        <button class="bk-btn bk-music" id="bkMusic" aria-label="Music" title="Music on / off">${I('volume')}<span class="bk-eqm"><i></i><i></i><i></i></span></button>
         <button class="bk-btn" id="bkFs" aria-label="Full screen">${I('expand')}</button>
         <button class="bk-btn bk-gear" id="bkGear" aria-label="Teacher settings" title="Teacher settings">${I('lock')}</button>
       </div>
@@ -354,6 +426,15 @@ function viewBunker() {
           stop() { cancelAnimationFrame(raf); raf = 0; }
         };
       })();
+      /* ---- music ---- */
+      const music = bunkerMusic(), mBtn = $('#bkMusic', bk);
+      let wantMusic = store.get('bunkerMusic', true);
+      const paintMusic = () => { mBtn.classList.toggle('on', music.on); mBtn.title = music.on ? 'Music: ON' : 'Music: OFF'; };
+      mBtn.onclick = e => { e.stopPropagation(); wantMusic = !music.on; store.set('bunkerMusic', wantMusic); wantMusic ? music.start() : music.stop(); paintMusic(); };
+      const firstTouch = () => { if (wantMusic && !music.on) { music.start(); paintMusic(); } };
+      bk.addEventListener('pointerdown', firstTouch);
+      paintMusic();
+
       /* ---- mission 4: Grammar Fight quiz ---- */
       const quiz = $('.bkq', bk);
       let qi = 0, qShow = false;
@@ -382,7 +463,7 @@ function viewBunker() {
       const paintSpeech = () => {
         $('.bks-time b', sp).textContent = `${Math.floor(spLeft / 60)}:${String(spLeft % 60).padStart(2, '0')}`;
         $('.bks-arc', sp).style.strokeDashoffset = 100 - spLeft / 60 * 100;
-        sp.classList.toggle('live', spWho != null); sp.classList.toggle('low', spWho != null && spLeft <= 10);
+        sp.classList.toggle('live', spWho != null); music.duck(spWho != null); sp.classList.toggle('low', spWho != null && spLeft <= 10);
         $$('.bks-go', sp).forEach(b => { const on = +b.dataset.cap === spWho; b.classList.toggle('on', on); $('em', b).textContent = on ? '■ STOP' : '▶ 60s'; });
       };
       const stopSpeech = () => { clearInterval(spIv); spIv = 0; spWho = null; spLeft = 60; paintSpeech(); };
@@ -567,6 +648,8 @@ function viewBunker() {
 
       const key = e => {
         if (e.target.matches('input,textarea') || panel.classList.contains('open')) return;
+        firstTouch();
+        if (e.key === 'm' || e.key === 'M') return mBtn.click();
         if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
         else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
         else if (e.key === 'f' || e.key === 'F') fs();
@@ -580,7 +663,7 @@ function viewBunker() {
       document.addEventListener('keydown', key);
       go(0);
       return () => {
-        document.removeEventListener('keydown', key); clearInterval(clockIv); clearInterval(spIv); timers.forEach(clearTimeout); token++; demo.stop();
+        document.removeEventListener('keydown', key); clearInterval(clockIv); clearInterval(spIv); music.stop(true); timers.forEach(clearTimeout); token++; demo.stop();
         if (document.fullscreenElement) document.exitFullscreen();
       };
     }

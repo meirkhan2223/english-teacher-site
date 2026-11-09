@@ -498,3 +498,13 @@ svg.bkv-spiral{position:absolute;inset:3%;width:94%;height:94%}
 
 .bk-mission.m-spiral,.bk-mission.m-quiz{grid-template-columns:1.15fr .85fr}
 @media (max-width:900px){.bk-mission.m-spiral,.bk-mission.m-quiz{grid-template-columns:1fr}}
+
+/* music button */
+.bk-music{position:relative;opacity:.6}
+.bk-music.on{opacity:1;color:var(--g);border-color:rgba(57,255,136,.5)}
+.bk-music .ic{width:18px;height:18px}
+.bk-eqm{position:absolute;right:5px;bottom:6px;display:flex;align-items:flex-end;gap:2px;height:10px}
+.bk-eqm i{width:2px;height:3px;background:currentColor;border-radius:1px}
+.bk-music.on .bk-eqm i{animation:bkEqm .5s ease-in-out infinite alternate}
+.bk-music.on .bk-eqm i:nth-child(2){animation-delay:-.2s}.bk-music.on .bk-eqm i:nth-child(3){animation-delay:-.35s}
+@keyframes bkEqm{to{height:10px}}
